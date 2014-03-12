@@ -4,15 +4,17 @@ module RedmineLightboxHelper
     #TODO: remove this shit after the best way will be found
     self.class.send(:include, RedmineLightboxHelper) unless self.methods.include?(:preview_available?)
 
+    redmine_lightbox_asset_options = options.dup
+    
     original_link = link_to_attachment_without_preview(attachment, options)
 
     return original_link unless preview_available?(attachment)
 
-    preview_icon = absolute_asset_url('images/preview.png')
-    icon_style = 'width: 18px; margin: 0px 4px'
-    preview_button = image_tag(preview_icon, :style => icon_style)
+    preview_icon = redmine_lightbox_asset_url('images/preview.png', redmine_lightbox_asset_options)
+    icon_style = 'width: 24px; height:16px; margin: 0px 4px'
+    preview_button = image_tag(preview_icon, :style => icon_style, :width => 24, :height => 16)
 
-    raw("#{original_link}#{preview_link_with(attachment, preview_button)}")
+    raw("#{original_link}#{preview_link_with(attachment, preview_button, redmine_lightbox_asset_options)}")
   end
 
   def thumbnail_with_preview_tag(attachment)
@@ -20,7 +22,10 @@ module RedmineLightboxHelper
                       image_tag(url_for(:controller => 'attachments', :action => 'thumbnail', :id => attachment)))
   end
 
-  def absolute_asset_url(asset_url, plugin_asset = true)
+  def redmine_lightbox_asset_url(asset_url, options={})
+    plugin_asset = options[:plugin_asset].nil? ? true : options.delete(:plugin_asset)
+    only_path = options[:only_path].nil? ? true : options[:only_path]
+    
     if plugin_asset
       paths = [
           'plugin_assets',
@@ -32,7 +37,7 @@ module RedmineLightboxHelper
       relative_url = asset_url
     end
 
-    "#{home_url}#{relative_url}"
+    (only_path) ? "#{home_path}#{relative_url}" : "#{home_url}#{relative_url}"
   end
 
   def preview_available?(attachment)
@@ -44,7 +49,9 @@ module RedmineLightboxHelper
     image || text || pdf_or_swf || attachment_preview
   end
 
-  def preview_link_with(attachment, preview_button)
+  def preview_link_with(attachment, preview_button, options={})
+    only_path = options[:only_path].nil? ? true : options[:only_path]
+    
     if attachment.transformed_preview
       link_class = "attachment_preview"
       attachment_action = "preview"
@@ -69,7 +76,7 @@ module RedmineLightboxHelper
           :action => attachment_action,
           :id => attachment,
           :filename => attachment.filename,
-          :only_path => false },
+          :only_path => only_path },
               :class => link_class,
               :rel => 'attachments',
               :title => attachment_title
