@@ -54,14 +54,14 @@ module RedmineLightboxHelper
     
     if attachment.transformed_preview
       link_class = "attachment_preview"
-      attachment_action = "preview"
+      attachment_action = "preview_inline"
     else
       if attachment.filename =~ /.(pdf|swf)$/i
         link_class = $1
       else
         link_class = "image"
       end
-      attachment_action = ($1 === 'swf' || attachment.image?) ? 'download_inline' : 'show'
+      attachment_action = ($1 === 'swf' || attachment.image?) ? 'download_inline' : ($1 === 'pdf') ? 'preview_inline' :'show'
     end
 
     if attachment.description.present?
@@ -71,16 +71,29 @@ module RedmineLightboxHelper
     end
 
     unless attachment.is_text?
-      link_to(preview_button, {
+      if attachment.transformed_preview || attachment.filename =~ /.(pdf|swf)$/
+        link_to(preview_button, {
           :controller => 'attachments',
           :action => attachment_action,
           :id => attachment,
           :filename => attachment.filename,
           :only_path => only_path },
               :class => link_class,
-              :rel => 'attachments',
-              :title => attachment_title
-      )
+              :title => attachment_title,
+              :data  => {:fancybox_type => 'iframe'}
+        )
+      else
+        link_to(preview_button, {
+            :controller => 'attachments',
+            :action => attachment_action,
+            :id => attachment,
+            :filename => attachment.filename,
+            :only_path => only_path },
+                :class => link_class,
+                :rel => 'attachments',
+                :title => attachment_title
+        )
+      end
     end
   end
 
