@@ -6,7 +6,7 @@ module RedmineLightbox
 
       class << self
         def convert(filename, output_format)
-          if filename.present? && File.exist?(filename)
+          if filename.present? && File.exist?(filename) && filename.rpartition(".")[2].downcase != output_format.downcase
             `#{CONVERTER} -f #{output_format} #{filename}`
           end
         end
